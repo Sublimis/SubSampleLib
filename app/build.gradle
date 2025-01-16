@@ -1,0 +1,90 @@
+plugins {
+    id 'com.android.library'
+    id 'maven-publish'
+    id 'signing'
+}
+
+def mainVersion = '3.1'
+
+android {
+    namespace 'io.github.sublimis.subsample'
+    compileSdk 34
+
+    defaultConfig {
+        minSdk 21
+        targetSdk 34
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+}
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            groupId = 'io.github.sublimis.subsample'
+            artifactId = 'subsample-lib'
+            version = mainVersion
+
+            afterEvaluate {
+                from components.release
+            }
+
+            pom {
+                name = "${groupId}:${artifactId}"
+                description = "Fast and simple \"Min/max\" sub-sampling of a (possibly segmented) list coercible to a two-dimensional (X/Y) chart of double-s."
+                inceptionYear = "2025"
+                url = "https://github.com/Sublimis/SubSampleLib"
+                licenses {
+                    license {
+                        name = "The Apache License, Version 2.0"
+                        url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                        distribution = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                    }
+                }
+                developers {
+                    developer {
+                        id = "Sublimis"
+                        name = "Sublimis"
+                        url = "https://github.com/Sublimis"
+                    }
+                }
+                scm {
+                    url = "https://github.com/Sublimis/SubSampleLib/tree/main"
+                    connection = "scm:git:git://github.com/Sublimis/SubSampleLib.git"
+                    developerConnection = "scm:git:ssh://github.com:Sublimis/SubSampleLib.git"
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'myrepo'
+            url = layout.buildDirectory.dir("repo")
+        }
+    }
+}
+
+signing {
+    sign publishing.publications
+}
+
+dependencies {
+    implementation 'androidx.annotation:annotation:1.9.1'
+}
+
+tasks.register('generateRepo', Zip) {
+    def publishTask = tasks.named('publishReleasePublicationToMyrepoRepository')
+    from publishTask.map { it.getRepository().getUrl() }
+    archiveFileName.set("SubSampleLib-v${mainVersion}.zip")
+}
